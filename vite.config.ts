@@ -4,15 +4,18 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  // 1. Tambahkan base path agar file CSS/JS terbaca di GitHub Pages
+  base: '/ZukoApp/', 
+  
+  // 2. Masukkan semua plugin ke dalam satu array
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
-    tailwindcss(),
+    tailwindcss(), // Pastikan tailwindcss juga masuk di sini
   ],
+
+  // 3. Pindahkan resolve ke dalam defineConfig (sebelum penutup })
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
       '@lib': path.resolve(__dirname, './lib'),
     },
