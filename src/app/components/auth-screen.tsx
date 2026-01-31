@@ -1,3 +1,5 @@
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -199,37 +201,47 @@ export function AuthScreen() {
     }
   };
 
-  // Handle Google login (demo)
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
+  // Handle Google login yang asli
+const handleGoogleLogin = async () => {
+  setIsLoading(true);
+  
+  try {
+    // 1. Panggil Firebase Google Auth
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+
+    // 2. Ambil data dari hasil login Google
+    const userData = {
+      id: user.uid,
+      name: user.displayName || "Google User",
+      email: user.email || "",
+      photoURL: user.photoURL, // Kamu bisa simpan foto profil juga
+      createdAt: new Date().toISOString(),
+      provider: "google",
+    };
+
+    // 3. Simpan ke localStorage (sesuai logika aplikasimu)
+    saveUserToLocalStorage(userData);
     
-    try {
-      // Simulasi Google OAuth
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Create demo user for Google login
-      const userData = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: "Google User",
-        email: "google.user@example.com",
-        createdAt: new Date().toISOString(),
-        provider: "google",
-      };
-
-      saveUserToLocalStorage(userData);
+    // Inisialisasi data aplikasi jika belum ada
+    const existingData = localStorage.getItem('zuko_user_data');
+    if (!existingData) {
       initializeUserData(userData.email, userData.name);
-
-      setTimeout(() => {
-        setIsLoading(false);
-        navigate("/dashboard");
-      }, 500);
-
-    } catch (error) {
-      console.error("Google login error:", error);
-      setIsLoading(false);
     }
-  };
 
+    // 4. Redirect ke dashboard
+    setIsLoading(false);
+    navigate("/dashboard");
+
+  } catch (error: any) {
+    console.error("Google login error:", error);
+    // Tampilkan error jika user menutup popup secara paksa
+    if (error.code !== 'auth/cancelled-popup-request') {
+      setLoginError("Gagal login dengan Google. Silakan coba lagi.");
+    }
+    setIsLoading(false);
+  }
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4 md:p-6">
       <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
@@ -299,7 +311,6 @@ export function AuthScreen() {
                           placeholder="you@example.com"
                           className="pl-10"
                           required
-                          defaultValue="user@example.com"
                         />
                       </div>
                     </div>
@@ -315,12 +326,8 @@ export function AuthScreen() {
                           placeholder="••••••••"
                           className="pl-10"
                           required
-                          defaultValue="password123"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Demo: user@example.com / password123
-                      </p>
                     </div>
                     
                     <Button
@@ -471,30 +478,9 @@ export function AuthScreen() {
                 </Button>
               </div>
 
-              {/* Demo Account Info */}
-              <div className="mt-6 pt-4 border-t">
-                <div className="bg-muted/30 rounded-lg p-4">
-                  <h4 className="text-sm font-medium mb-2">Demo Accounts</h4>
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <div className="flex justify-between">
-                      <span>Email:</span>
-                      <code className="bg-muted px-2 py-1 rounded">user@example.com</code>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Password:</span>
-                      <code className="bg-muted px-2 py-1 rounded">password123</code>
-                    </div>
-                    <p className="text-xs mt-2">
-                      Or create a new account to start fresh!
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               {/* Privacy Notice */}
-              <div className="mt-4 text-center">
+              <div className="mt-8 text-center border-t pt-4">
                 <p className="text-xs text-muted-foreground">
-                  Your data is stored locally in your browser. For cloud sync, please use the same browser.
                 </p>
               </div>
             </CardContent>
